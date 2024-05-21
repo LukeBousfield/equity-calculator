@@ -125,6 +125,8 @@ export default function Home() {
 
   let percent = calculateEquityPercentage(investment, valuation, cap, floor, discount);
 
+  percent = Math.min(percent, 100);
+
   let fixedInvestment = parseNum(fixedInvestmentStr);
   let fixedStake = parseNum(fixedStakeStr);
 
