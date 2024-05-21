@@ -1,113 +1,251 @@
-import Image from "next/image";
+'use client';
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { useState, useEffect, useRef } from "react";
+
+function calculateEquityPercentage(investmentAmount: number, actualValuation: number, valuationCap: number, valuationFloor: number, discountRate: number) {
+  // Apply discount rate to the actual valuation
+  let discountedValuation = actualValuation * (1 - discountRate / 100);
+
+  // Determine the effective valuation
+  let effectiveValuation = Math.min(valuationCap, Math.max(discountedValuation, valuationFloor));
+
+  // Calculate the percentage of the company the investor would receive
+  let equityPercentage = (investmentAmount / effectiveValuation) * 100;
+
+  return equityPercentage;
+}
+
+const presets: any = {
+  'none': {
+    name: 'None',
+    investment: '100,000',
+    cap: null,
+    floor: null,
+    discount: '0',
+    fixedInvestment: '0',
+    fixedStake: '0'
+  },
+  'pearx': {
+    name: 'PearX',
+    investment: '500,000',
+    cap: '10,000,000',
+    floor: null,
+    discount: '0',
+    fixedInvestment: '0',
+    fixedStake: '0'
+  },
+  'zfellow': {
+    name: 'ZFellows',
+    investment: '10,000',
+    cap: '1,000,000,000',
+    floor: null,
+    discount: '0',
+    fixedInvestment: '0',
+    fixedStake: '0'
+  },
+  'yc': {
+    name: 'YCombinator',
+    investment: '375,000',
+    cap: null,
+    floor: null,
+    discount: '0',
+    fixedInvestment: '125,000',
+    fixedStake: '7'
+  },
+  'techstars': {
+    name: 'TechStars',
+    investment: '0',
+    cap: null,
+    floor: null,
+    discount: '0',
+    fixedInvestment: '20,000',
+    fixedStake: '6'
+  }
+};
 
 export default function Home() {
+
+  const [sliderValue, setSliderValue] = useState(40);
+  const [isCapDisabled, setIsCapDisabled] = useState(true);
+  const [isFloorDisabled, setIsFloorDisabled] = useState(true);
+  const [investmentStr, setInvestmentStr] = useState('10,000');
+  const [capStr, setCapStr] = useState('');
+  const [floorStr, setFloorStr] = useState('');
+  const [discountStr, setDiscountStr] = useState('0');
+  const [preset, setPreset] = useState('none');
+  const [fixedInvestmentStr, setFixedInvestmentStr] = useState('0');
+  const [fixedStakeStr, setFixedStakeStr] = useState('0');
+
+  const lastPreset = usePrevious(preset);
+
+  function usePrevious(value: any) {
+    const ref = useRef();
+    useEffect(() => {
+      ref.current = value;
+    });
+    return ref.current;
+  }
+
+  useEffect(() => {
+    console.log(lastPreset, preset);
+    if (preset !== lastPreset) return;
+    setPreset('none');
+  }, [investmentStr, isCapDisabled, isFloorDisabled, capStr, floorStr, discountStr, preset, fixedStakeStr]);
+
+  let valuation = Math.round(100000 * Math.pow(100000, sliderValue / 100));
+  valuation = Math.round(valuation / 10000) * 10000;
+  let valShow = valuation.toLocaleString();
+
+  function parseNum(inputString: string) {
+    return parseInt(inputString.replace(/\D/g, '')) || 0;
+  }
+
+  function applyPreset(preset: any) {
+    console.log(preset);
+    setIsCapDisabled(preset.cap === null);
+    setIsFloorDisabled(preset.floor === null);
+    setInvestmentStr(preset.investment);
+    if (preset.cap) setCapStr(preset.cap);
+    if (preset.floor) setFloorStr(preset.floor);
+    setDiscountStr(preset.discount);
+    setFixedInvestmentStr(preset.fixedInvestment);
+    setFixedStakeStr(preset.fixedStake);
+  }
+
+  let investment = parseNum(investmentStr);
+  let cap = isCapDisabled ? 1000000000000 : parseNum(capStr);
+  let floor = isFloorDisabled ? 0 : parseNum(floorStr);
+  let discount = parseNum(discountStr);
+
+  console.log(investment, valuation, cap, floor, discount);
+
+  let percent = calculateEquityPercentage(investment, valuation, cap, floor, discount);
+
+  let fixedInvestment = parseNum(fixedInvestmentStr);
+  let fixedStake = parseNum(fixedStakeStr);
+
+  let numDigits = 2;
+  if (percent < 0.1) {
+    numDigits = 3;
+  }
+  if (percent < 0.01) {
+    numDigits = 4;
+  }
+  if (percent === 0) {
+    numDigits = 0;
+  }
+  let showBeforePercent = percent.toFixed(numDigits).toLocaleString();
+
+  percent += fixedStake;
+
+  percent = Math.min(percent, 100);
+  let numDigits2 = 2;
+  if (percent < 0.1) {
+    numDigits2 = 3;
+  }
+  if (percent < 0.01) {
+    numDigits2 = 4;
+  }
+  if (percent === 0) {
+    numDigits2 = 0;
+  }
+  let showPercent = percent.toFixed(numDigits2).toLocaleString();
+  let worth = Math.round(percent/100 * valuation).toLocaleString();
+
+  function changePresetSelect(newPreset: string) {
+    setPreset(newPreset);
+    applyPreset(presets[newPreset]);
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="container flex flex-col items-center justify-center h-screen">
+
+      <h1 className="text-2xl mb-5">Your Ultimate Equity Calculator</h1>
+
+      <div className="flex w-1/2 items-center justify-center">
+        <Label className="mr-2">Preset: </Label>
+        <Select value={preset} onValueChange={changePresetSelect}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="None" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.keys(presets).map((preset: any, i: number) => (
+            <SelectItem key={preset} value={preset}>{presets[preset].name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex w-full py-10">
+      <div className="flex flex-col mb-10 w-1/2 items-center">
+      <h1 className="font-semibold text-xl mb-2">SAFE Note</h1>
+          <div className="flex items-center justify-center my-4">
+            <Label className="mr-2">Investment:</Label>
+            <Label className="mr-0">$</Label>
+            <Input className="input-number mx-2 w-[100px]" size={10} value={investmentStr} onChange={e => setInvestmentStr(e.target.value)} />
+        </div>
+        <div className="flex items-center justify-center my-4">
+            <Label className="mr-2">Valuation cap:</Label>
+            <Label className="mr-0">$</Label>
+            <Input className="input-number mx-2 w-[100px]" size={10} disabled={isCapDisabled} value={capStr} onChange={e => setCapStr(e.target.value)} />
+            <div className="flex items-center">
+                <Input className="input-checkbox mr-2" type="checkbox" checked={isCapDisabled} onChange={e => setIsCapDisabled(e.target.checked)} />
+                <Label>Uncapped</Label>
+            </div>
+        </div>
+        <div className="flex items-center justify-center my-4">
+            <Label className="mr-2">Valuation floor:</Label>
+            <Label className="mr-0">$</Label>
+            <Input className="input-number mx-2 w-[100px]" size={10} disabled={isFloorDisabled} value={floorStr} onChange={e => setFloorStr(e.target.value)} />
+            <div className="flex items-center">
+            <Input className="input-checkbox mr-2" type="checkbox" checked={isFloorDisabled} onChange={e => setIsFloorDisabled(e.target.checked)} />
+                <Label>None</Label>
+            </div>
+        </div>
+        <div className="flex items-center justify-center my-4">
+            <Label className="mr-2">Discount rate:</Label>
+            <Input className="input-number mx-2 w-[100px]" type="number" value={discountStr} onChange={e => setDiscountStr(e.target.value)} />
+            <span>%</span>
         </div>
       </div>
-
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div className="border-l border-gray-300 h-full mx-4"></div>
+      <div className="flex flex-col mb-10 w-1/2">
+      <h1 className="font-semibold text-xl mb-2 text-center">Fixed-Term</h1>
+      <div className="flex flex-col items-center justify-center">
+        <div className="flex items-center justify-center my-4">
+        <Label className="mr-2">Investment:</Label>
+        <Label className="mr-0">$</Label>
+        <Input className="input-number mx-2 w-[100px]" size={10} value={fixedInvestmentStr} onChange={e => setFixedInvestmentStr(e.target.value)} />
+        </div>
+        <div className="flex items-center justify-center my-4">
+        <Label className="mr-2">Stake:</Label>
+        <Input className="input-number mx-2 w-[100px]" size={10} value={fixedStakeStr} onChange={e => setFixedStakeStr(e.target.value)} />
+        <span>%</span>
+        </div>
+      </div>
+      </div>
       </div>
 
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+      <div className="flex flex-col items-center justify-center w-screen px-10">
+        <Slider value={[sliderValue]} onValueChange={values => setSliderValue(values[0])} />
+        <h1 className="my-10 font-semibold text-2xl">${valShow}</h1>
       </div>
-    </main>
+
+      <div className="flex items-center justify-center">
+        {(showPercent !== "NaN" && worth !== "NaN" && showPercent !== "Infinity") && (
+        <h1>
+        At this valuation, the investor would receive <span className="text-teal-600">{showPercent}%</span> of your company, worth <span className="text-teal-600">${worth}.</span>
+        {(fixedStake != 0) && (
+          <span><br/>This includes <span className="text-teal-600">{showBeforePercent}%</span> from the SAFE note and <span className="text-teal-600">{fixedStakeStr}%</span> from the fixed terms.</span>
+        )}
+        </h1>
+        )}
+      </div>
+      
+    </div>
   );
 }
