@@ -20,14 +20,14 @@ function calculateEquityPercentage(investmentAmount: number, actualValuation: nu
 }
 
 const presets: any = {
-  'none': {
-    name: 'None',
-    investment: '100,000',
+  'yc': {
+    name: 'YCombinator',
+    investment: '375,000',
     cap: null,
     floor: null,
     discount: '0',
-    fixedInvestment: '0',
-    fixedStake: '0'
+    fixedInvestment: '125,000',
+    fixedStake: '7'
   },
   'pearx': {
     name: 'PearX',
@@ -47,15 +47,6 @@ const presets: any = {
     fixedInvestment: '0',
     fixedStake: '0'
   },
-  'yc': {
-    name: 'YCombinator',
-    investment: '375,000',
-    cap: null,
-    floor: null,
-    discount: '0',
-    fixedInvestment: '125,000',
-    fixedStake: '7'
-  },
   'techstars': {
     name: 'TechStars',
     investment: '0',
@@ -64,6 +55,15 @@ const presets: any = {
     discount: '0',
     fixedInvestment: '20,000',
     fixedStake: '6'
+  },
+  'none': {
+    name: 'None',
+    investment: '100,000',
+    cap: null,
+    floor: null,
+    discount: '0',
+    fixedInvestment: '0',
+    fixedStake: '0'
   }
 };
 
@@ -160,6 +160,10 @@ export default function Home() {
     setPreset(newPreset);
     applyPreset(presets[newPreset]);
   }
+
+  useEffect(() => {
+    changePresetSelect('yc');
+  }, []);
 
   return (
     <div className="container flex flex-col items-center justify-center h-screen">
