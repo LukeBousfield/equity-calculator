@@ -47,6 +47,15 @@ const presets: any = {
     fixedInvestment: '0',
     fixedStake: '0'
   },
+  'neo': {
+    name: 'Neo',
+    investment: '600,000',
+    cap: null,
+    floor: '10,000,000',
+    discount: '0',
+    fixedInvestment: '0',
+    fixedStake: '1.5'
+  },
   'techstars': {
     name: 'TechStars',
     investment: '0',
@@ -91,7 +100,6 @@ export default function Home() {
   }
 
   useEffect(() => {
-    console.log(lastPreset, preset);
     if (preset !== lastPreset) return;
     setPreset('none');
   }, [investmentStr, isCapDisabled, isFloorDisabled, capStr, floorStr, discountStr, preset, fixedStakeStr]);
@@ -105,7 +113,6 @@ export default function Home() {
   }
 
   function applyPreset(preset: any) {
-    console.log(preset);
     setIsCapDisabled(preset.cap === null);
     setIsFloorDisabled(preset.floor === null);
     setInvestmentStr(preset.investment);
@@ -120,8 +127,6 @@ export default function Home() {
   let cap = isCapDisabled ? 1000000000000 : parseNum(capStr);
   let floor = isFloorDisabled ? 0 : parseNum(floorStr);
   let discount = parseNum(discountStr);
-
-  console.log(investment, valuation, cap, floor, discount);
 
   let percent = calculateEquityPercentage(investment, valuation, cap, floor, discount);
 
