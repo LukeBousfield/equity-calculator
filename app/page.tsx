@@ -109,7 +109,7 @@ export default function Home() {
   let valShow = valuation.toLocaleString();
 
   function parseNum(inputString: string) {
-    return parseInt(inputString.replace(/\D/g, '')) || 0;
+    return parseFloat(inputString.replace(/[^\d.]/g, '')) || 0;
   }
 
   function applyPreset(preset: any) {
